@@ -6,6 +6,14 @@ read-only [vim-fugitive](https://github.com/tpope/vim-fugitive) status buffer.
 Your notes will be displayed as virtual text and saved to a default location of
 `stdpath("data") + "/virt_notes/"`.
 
+
+https://user-images.githubusercontent.com/62202958/224789708-d6f70987-6724-4498-9d0b-5d333aabc3ca.mp4
+
+In this video I use the [gruvbox.nvim](https://github.com/ellisonleao/gruvbox.nvim) color scheme,
+[dressing.nvim](https://github.com/stevearc/dressing.nvim) for input and
+[dressing.nvim](https://github.com/stevearc/dressing.nvim) +
+[telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) for selection.
+
 ## Requirements
 
 - [neovim >=0.8.0](https://github.com/neovim/neovim/wiki/Installing-Neovim)
