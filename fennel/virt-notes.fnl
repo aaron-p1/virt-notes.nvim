@@ -10,6 +10,7 @@
               : nvim_buf_get_extmarks
               : nvim_buf_get_name
               : nvim_buf_get_option
+              : nvim_buf_line_count
               : nvim_buf_set_extmark
               : nvim_create_augroup
               : nvim_create_autocmd
@@ -111,9 +112,11 @@
 (lambda set-all-notes [bufnr all-notes ?disable-event]
   "Set all notes for buffer"
   (nvim_buf_clear_namespace bufnr namespace 0 -1)
-  (each [line notes (pairs all-notes)]
-    (nvim_buf_set_extmark bufnr namespace line 0
-                          {:virt_text (notes->virt-text notes)}))
+  (let [max-line (nvim_buf_line_count bufnr)]
+    (each [line notes (pairs all-notes)]
+      (let [real-line (if (>= line max-line) (- max-line 1) line)]
+        (nvim_buf_set_extmark bufnr namespace real-line 0
+                              {:virt_text (notes->virt-text notes)}))))
   (when (not ?disable-event)
     (nvim_exec_autocmds :User
                         {:pattern :VirtualNotesUpdated :data {:buf bufnr}})))
