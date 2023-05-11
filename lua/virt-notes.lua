@@ -312,18 +312,19 @@
  local file = get_absolute_path()
  local bufnr = nvim_get_current_buf()
  local line = get_line()
- add_note(bufnr, line, _3fsaved_note.note)
+ local note_text = _3fsaved_note.note
  if delete_note_on_paste_3f then
- remove_note(_3fsaved_note.bufnr, _3fsaved_note.line, _3fsaved_note.note)
- return save_note(delete_note_on_paste_3f, bufnr, line, _3fsaved_note.note) else return nil end else
+ remove_note(_3fsaved_note.bufnr, _3fsaved_note.line, _3fsaved_note.note) else end
+ add_note(bufnr, line, note_text)
+ return save_note(delete_note_on_paste_3f, bufnr, line, note_text) else
  return nvim_echo({{"No note selected", "ErrorMsg"}}, false, {}) end end
 
- local function replace_prefix(keys, prefix) _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:321") _G.assert((nil ~= keys), "Missing argument keys on fennel/virt-notes.fnl:321")
+ local function replace_prefix(keys, prefix) _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:322") _G.assert((nil ~= keys), "Missing argument keys on fennel/virt-notes.fnl:322")
  local function _61_(word)
  if (string.lower(word) == "prefix") then
  return prefix else return nil end end return string.gsub(keys, "<([^>]+)>", _61_) end
 
- local function map_keys(prefix, mappings) _G.assert((nil ~= mappings), "Missing argument mappings on fennel/virt-notes.fnl:326") _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:326")
+ local function map_keys(prefix, mappings) _G.assert((nil ~= mappings), "Missing argument mappings on fennel/virt-notes.fnl:327") _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:327")
 
  local set_mappings local function _63_(_241) if (_241 == false) then return nil else return _241 end end set_mappings = tbl_map(_63_, mappings)
  for action, _65_ in pairs(set_mappings) do local _each_66_ = _65_ local keys = _each_66_["keys"] local opts = _each_66_["opts"]
@@ -332,7 +333,7 @@
  if callback then
  kset("n", real_keys, callback, opts) else end end return nil end
 
- local function validate_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:335")
+ local function validate_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:336")
  local user_mappings local function _68_() local t_69_ = config.mappings if (nil ~= t_69_) then t_69_ = (t_69_).actions else end return t_69_ end user_mappings = (_68_() or {}) local map_rules
  do local tbl_14_auto = {} for action, map_opts in pairs(user_mappings) do
  local k_15_auto, v_16_auto = ("mappings.actions." .. action), {map_opts, {"table", "string", "boolean"}} if ((k_15_auto ~= nil) and (v_16_auto ~= nil)) then tbl_14_auto[k_15_auto] = v_16_auto else end end map_rules = tbl_14_auto end local rules
@@ -345,7 +346,7 @@
  local _76_ do local t_75_ = config.mappings if (nil ~= t_75_) then t_75_ = (t_75_).actions else end _76_ = t_75_ end rules = {notes_path = {config.notes_path, {"string", "nil"}}, hl_group = {config.hl_group, {"string", "nil"}}, remove_schemes = {config.remove_schemes, {"table", "nil"}}, mappings = {config.mappings, {"table", "boolean", "nil"}}, ["mappings.prefix"] = {_73_, {"string", "nil"}}, ["mappings.actions"] = {_76_, {"table", "nil"}}}
  return validate(tbl_extend("error", rules, map_rules)) end
 
- local function apply_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:348")
+ local function apply_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:349")
  if config.notes_path then
  notes_path = config.notes_path else end
  if config.hl_group then
@@ -359,7 +360,7 @@
  local function _81_(_241) if (type(_241) == "string") then return {keys = _241} else return _241 end end key_actions = tbl_map(_81_, (map_cfg.actions or {}))
  return map_keys(prefix, tbl_deep_extend("force", default_mappings, key_actions)) else return nil end end
 
- local function fix_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:362")
+ local function fix_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:363")
  local _85_ do local t_84_ = config if (nil ~= t_84_) then t_84_ = (t_84_).mappings else end if (nil ~= t_84_) then t_84_ = (t_84_).actions else end if (nil ~= t_84_) then t_84_ = (t_84_).move else end _85_ = t_84_ end if _85_ then
  config.mappings.actions["cut"] = config.mappings.actions.move
  config.mappings.actions["move"] = nil else end

@@ -311,11 +311,12 @@
   (if ?saved-note
       (let [file (get-absolute-path)
             bufnr (nvim_get_current_buf)
-            line (get-line)]
-        (add-note bufnr line ?saved-note.note)
+            line (get-line)
+            note-text ?saved-note.note]
         (when delete-note-on-paste?
-          (remove-note ?saved-note.bufnr ?saved-note.line ?saved-note.note)
-          (save-note delete-note-on-paste? bufnr line ?saved-note.note)))
+          (remove-note ?saved-note.bufnr ?saved-note.line ?saved-note.note))
+        (add-note bufnr line note-text)
+        (save-note delete-note-on-paste? bufnr line note-text))
       (nvim_echo [["No note selected" :ErrorMsg]] false {})))
 
 (lambda replace-prefix [keys prefix]
