@@ -45,13 +45,16 @@
                        :opts {:desc "Delete all notes on line"}}
       :remove-in-file {:keys :<prefix>da
                        :opts {:desc "Delete all notes in file"}}
-      :move {:keys :<prefix>x :opts {:desc "Move note"}}
+      :copy {:keys :<prefix>c :opts {:desc "Copy note"}}
+      ; move is deprecated but still does the same as cut
+      :cut {:keys :<prefix>x :opts {:desc "Cut note"}}
       :paste {:keys :<prefix>p :opts {:desc "Paste note"}}})
 
 (var notes-path (.. (stdpath :data) :/virt_notes))
 (var remove-schemes [:oil])
 
 (var ?saved-note nil)
+(var delete-note-on-paste? false)
 
 (local actions [])
 
@@ -227,6 +230,10 @@
         notes-files (get-project-notes-files cwd)]
     (get-notes-in-files notes-files)))
 
+(lambda save-note [delete-on-paste? bufnr line note]
+  (set ?saved-note {: bufnr : line : note})
+  (set delete-note-on-paste? delete-on-paste?))
+
 (lambda on-buf-read [{:buf bufnr}]
   (let [file (get-absolute-path bufnr)]
     (when (not= "" file)
@@ -278,13 +285,26 @@
         bufnr (nvim_get_current_buf)]
     (set-all-notes bufnr [])))
 
-(fn actions.move []
-  (let [bufnr (nvim_get_current_buf)
+(lambda actions.save-note [?prompt ?success-msg ?delete-on-paste?]
+  (let [prompt (or ?prompt "Save note")
+        success-msg (or ?success-msg "Note saved")
+        delete-on-paste? (or ?delete-on-paste? false)
+        bufnr (nvim_get_current_buf)
         line (get-line)]
-    (select-note-on-line "Move note" bufnr line
+    (select-note-on-line prompt bufnr line
                          #(do
-                            (set ?saved-note {: bufnr : line :note $1})
-                            (nvim_echo [["Moving note: "] [$1]] false {})))))
+                            (save-note delete-on-paste? bufnr line $1)
+                            (nvim_echo [[success-msg] [": "] [$1]] false {})))))
+
+(fn actions.copy []
+  (actions.save-note "Copy note" "Note copied" false))
+
+(fn actions.move []
+  (vim.deprecate "actions.move()" "actions.cut()" :2024 :virt-notes.nvim true)
+  (actions.save-note "Move note" "Moving note" true))
+
+(fn actions.cut []
+  (actions.save-note "Cut note" "Note cut" true))
 
 (fn actions.paste []
   (if ?saved-note
@@ -292,8 +312,9 @@
             bufnr (nvim_get_current_buf)
             line (get-line)]
         (add-note bufnr line ?saved-note.note)
-        (remove-note ?saved-note.bufnr ?saved-note.line ?saved-note.note)
-        (set ?saved-note {: bufnr : line :note ?saved-note.note}))
+        (when delete-note-on-paste?
+          (remove-note ?saved-note.bufnr ?saved-note.line ?saved-note.note)
+          (save-note delete-note-on-paste? bufnr line ?saved-note.note)))
       (nvim_echo [["No note selected" :ErrorMsg]] false {})))
 
 (lambda replace-prefix [keys prefix]
@@ -337,8 +358,14 @@
                            (tbl_map #(if (= (type $1) :string) {:keys $1} $1)))]
       (map-keys prefix (tbl_extend :force default-mappings key-actions)))))
 
+(lambda fix-config [config]
+  (when (?. config :mappings :actions :move)
+    (tset config.mappings.actions :cut config.mappings.actions.move)
+    (tset config.mappings.actions :move nil))
+  config)
+
 (fn setup [?config]
-  (let [config (or ?config {})]
+  (let [config (fix-config (or ?config {}))]
     (validate-config config)
     (apply-config config))
   (mkdir notes-path :p)

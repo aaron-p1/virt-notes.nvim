@@ -38,7 +38,9 @@
 
 
 
- local default_mappings = {add = {keys = "<prefix>a", opts = {desc = "Add note"}}, edit = {keys = "<prefix>e", opts = {desc = "Edit note"}}, remove = {keys = "<prefix>dd", opts = {desc = "Delete note"}}, remove_on_line = {keys = "<prefix>dl", opts = {desc = "Delete all notes on line"}}, ["remove-in-file"] = {keys = "<prefix>da", opts = {desc = "Delete all notes in file"}}, move = {keys = "<prefix>x", opts = {desc = "Move note"}}, paste = {keys = "<prefix>p", opts = {desc = "Paste note"}}}
+ local default_mappings = {add = {keys = "<prefix>a", opts = {desc = "Add note"}}, edit = {keys = "<prefix>e", opts = {desc = "Edit note"}}, remove = {keys = "<prefix>dd", opts = {desc = "Delete note"}}, remove_on_line = {keys = "<prefix>dl", opts = {desc = "Delete all notes on line"}}, ["remove-in-file"] = {keys = "<prefix>da", opts = {desc = "Delete all notes in file"}}, copy = {keys = "<prefix>c", opts = {desc = "Copy note"}}, cut = {keys = "<prefix>x", opts = {desc = "Cut note"}}, paste = {keys = "<prefix>p", opts = {desc = "Paste note"}}}
+
+
 
 
 
@@ -51,44 +53,45 @@
  local notes_path = (stdpath("data") .. "/virt_notes")
  local remove_schemes = {"oil"}
 
- local _3fsaved_note = nil
+ local _3fsaved_note = nil local delete_note_on_paste_3f = false
+
 
  local actions = {}
 
  nvim_set_hl(0, note_highlight, {default = true, link = "WildMenu"})
 
- local function index_of(table, value) _G.assert((nil ~= value), "Missing argument value on fennel/virt-notes.fnl:60") _G.assert((nil ~= table), "Missing argument table on fennel/virt-notes.fnl:60")
+ local function index_of(table, value) _G.assert((nil ~= value), "Missing argument value on fennel/virt-notes.fnl:63") _G.assert((nil ~= table), "Missing argument table on fennel/virt-notes.fnl:63")
  local index = nil for k, v in pairs(table) do if index then break end
  if (v == value) then index = k else index = nil end end return index end
 
- local function clear_scheme(path) _G.assert((nil ~= path), "Missing argument path on fennel/virt-notes.fnl:64")
+ local function clear_scheme(path) _G.assert((nil ~= path), "Missing argument path on fennel/virt-notes.fnl:67")
  local new_path = path for _, scheme in ipairs(remove_schemes) do
  new_path = string.gsub(new_path, ("^" .. scheme .. "://"), "") end return new_path end
 
  local function get_absolute_path(_3fbufnr)
  return clear_scheme(nvim_buf_get_name((_3fbufnr or 0))) end
 
- local function clean_path(path) _G.assert((nil ~= path), "Missing argument path on fennel/virt-notes.fnl:71")
+ local function clean_path(path) _G.assert((nil ~= path), "Missing argument path on fennel/virt-notes.fnl:74")
  return string.gsub(path, "/", "_") end
 
- local function file__3enotes_file(file) _G.assert((nil ~= file), "Missing argument file on fennel/virt-notes.fnl:74")
+ local function file__3enotes_file(file) _G.assert((nil ~= file), "Missing argument file on fennel/virt-notes.fnl:77")
  return (notes_path .. "/" .. clean_path(file) .. ".txt") end
 
  local function get_line()
  local _let_6_ = nvim_win_get_cursor(0) local line = _let_6_[1]
  return (line - 1) end
 
- local function remove_scheme(notes_file) _G.assert((nil ~= notes_file), "Missing argument notes-file on fennel/virt-notes.fnl:81")
+ local function remove_scheme(notes_file) _G.assert((nil ~= notes_file), "Missing argument notes-file on fennel/virt-notes.fnl:84")
  return substitute(notes_file, "^\\(\\w\\+:__\\)\\?", "", "") end
 
- local function notes__3evirt_text(notes) _G.assert((nil ~= notes), "Missing argument notes on fennel/virt-notes.fnl:84")
+ local function notes__3evirt_text(notes) _G.assert((nil ~= notes), "Missing argument notes on fennel/virt-notes.fnl:87")
  local virt_text local _7_ do local tbl_17_auto = {} local i_18_auto = #tbl_17_auto for _, note in ipairs(notes) do
  local val_19_auto = {{note, note_highlight}, {" "}} if (nil ~= val_19_auto) then i_18_auto = (i_18_auto + 1) do end (tbl_17_auto)[i_18_auto] = val_19_auto else end end _7_ = tbl_17_auto end virt_text = flatten(_7_, 1)
 
  table.remove(virt_text)
  return virt_text end
 
- local function extmarks__3enotes(extmarks) _G.assert((nil ~= extmarks), "Missing argument extmarks on fennel/virt-notes.fnl:91")
+ local function extmarks__3enotes(extmarks) _G.assert((nil ~= extmarks), "Missing argument extmarks on fennel/virt-notes.fnl:94")
  local notes = {} for _, _9_ in ipairs(extmarks) do local _each_10_ = _9_ local _0 = _each_10_[1] local line = _each_10_[2] local _1 = _each_10_[3] local _each_11_ = _each_10_[4] local virt_text = _each_11_["virt_text"]
  local existing = (notes[line] or {}) local virt_note_text
 
@@ -97,19 +100,19 @@
  do end (notes)[line] = tbl_flatten({existing, virt_note_text})
  notes = notes end return notes end
 
- local function get_all_notes(bufnr) _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:100")
+ local function get_all_notes(bufnr) _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:103")
 
  local extmarks = nvim_buf_get_extmarks(bufnr, namespace, 0, -1, {details = true})
  return extmarks__3enotes(extmarks) end
 
- local function get_notes(bufnr, line) _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:105") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:105")
+ local function get_notes(bufnr, line) _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:108") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:108")
 
  local extmarks = nvim_buf_get_extmarks(bufnr, namespace, {line, 0}, {line, -1}, {details = true})
 
  local line_notes = extmarks__3enotes(extmarks)
  return (line_notes[line] or {}) end
 
- local function set_all_notes(bufnr, all_notes, _3fdisable_event) _G.assert((nil ~= all_notes), "Missing argument all-notes on fennel/virt-notes.fnl:112") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:112")
+ local function set_all_notes(bufnr, all_notes, _3fdisable_event) _G.assert((nil ~= all_notes), "Missing argument all-notes on fennel/virt-notes.fnl:115") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:115")
 
  nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
  do local max_line = nvim_buf_line_count(bufnr)
@@ -121,7 +124,7 @@
  return nvim_exec_autocmds("User", {pattern = "VirtualNotesUpdated", data = {buf = bufnr}}) else return nil end end
 
 
- local function set_notes(bufnr, line, notes, _3fdisable_event) _G.assert((nil ~= notes), "Missing argument notes on fennel/virt-notes.fnl:124") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:124") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:124")
+ local function set_notes(bufnr, line, notes, _3fdisable_event) _G.assert((nil ~= notes), "Missing argument notes on fennel/virt-notes.fnl:127") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:127") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:127")
 
  nvim_buf_clear_namespace(bufnr, namespace, line, (line + 1))
  if (#notes > 0) then
@@ -131,34 +134,34 @@
  return nvim_exec_autocmds("User", {pattern = "VirtualNotesUpdated", data = {buf = bufnr}}) else return nil end end
 
 
- local function add_note(bufnr, line, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:134") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:134") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:134")
+ local function add_note(bufnr, line, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:137") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:137") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:137")
  local existing = get_notes(bufnr, line)
  local note_exists_3f = tbl_contains(existing, note)
  if not note_exists_3f then
  table.insert(existing, note)
  return set_notes(bufnr, line, existing) else return nil end end
 
- local function remove_note(bufnr, line, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:141") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:141") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:141")
+ local function remove_note(bufnr, line, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:144") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:144") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:144")
  local existing = get_notes(bufnr, line)
  local _3fnote_index = index_of(existing, note)
  if _3fnote_index then
  table.remove(existing, _3fnote_index)
  return set_notes(bufnr, line, existing) else return nil end end
 
- local function edit_note(bufnr, line, old_note, new_note) _G.assert((nil ~= new_note), "Missing argument new-note on fennel/virt-notes.fnl:148") _G.assert((nil ~= old_note), "Missing argument old-note on fennel/virt-notes.fnl:148") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:148") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:148")
+ local function edit_note(bufnr, line, old_note, new_note) _G.assert((nil ~= new_note), "Missing argument new-note on fennel/virt-notes.fnl:151") _G.assert((nil ~= old_note), "Missing argument old-note on fennel/virt-notes.fnl:151") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:151") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:151")
  local existing = get_notes(bufnr, line)
  local _3fnote_index = index_of(existing, old_note)
  if _3fnote_index then
  existing[_3fnote_index] = new_note
  return set_notes(bufnr, line, existing) else return nil end end
 
- local function note__3eline(line_nr, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:155") _G.assert((nil ~= line_nr), "Missing argument line-nr on fennel/virt-notes.fnl:155")
+ local function note__3eline(line_nr, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:158") _G.assert((nil ~= line_nr), "Missing argument line-nr on fennel/virt-notes.fnl:158")
  return (line_nr .. " " .. note) end
 
- local function line__3enote(line) _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:158")
+ local function line__3enote(line) _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:161")
  return string.match(line, "^(%d+) (.*)$") end
 
- local function persist_notes(bufnr, file) _G.assert((nil ~= file), "Missing argument file on fennel/virt-notes.fnl:161") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:161")
+ local function persist_notes(bufnr, file) _G.assert((nil ~= file), "Missing argument file on fennel/virt-notes.fnl:164") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:164")
 
  local notes_file = file__3enotes_file(file)
  local all_notes = get_all_notes(bufnr) local lines
@@ -171,7 +174,7 @@
  table.insert(lines, 1, file)
  return writefile(lines, notes_file) end end
 
- local function parse_notes_file(lines) _G.assert((nil ~= lines), "Missing argument lines on fennel/virt-notes.fnl:174")
+ local function parse_notes_file(lines) _G.assert((nil ~= lines), "Missing argument lines on fennel/virt-notes.fnl:177")
 
 
  local file = lines[1]
@@ -186,7 +189,7 @@
  do end (notes)[linenr] = existing else end
  notes = notes end return notes end return {file, _25_()} end
 
- local function get_notes_from_file(notes_file) _G.assert((nil ~= notes_file), "Missing argument notes-file on fennel/virt-notes.fnl:189")
+ local function get_notes_from_file(notes_file) _G.assert((nil ~= notes_file), "Missing argument notes-file on fennel/virt-notes.fnl:192")
 
  local _27_, _28_ = pcall(readfile, notes_file) if ((_27_ == true) and ((_G.type(_28_) == "table") and (nil ~= (_28_)[1]))) then local l = (_28_)[1] local lines = _28_
  return parse_notes_file(lines) elseif true then local _ = _27_
@@ -199,16 +202,16 @@
  local _let_30_ = get_notes_from_file(notes_file0) local file = _let_30_[1] local all_notes = _let_30_[2]
  k_15_auto, v_16_auto = file, all_notes end if ((k_15_auto ~= nil) and (v_16_auto ~= nil)) then tbl_14_auto[k_15_auto] = v_16_auto else end end return tbl_14_auto end
 
- local function load_notes(bufnr, file) _G.assert((nil ~= file), "Missing argument file on fennel/virt-notes.fnl:202") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:202")
+ local function load_notes(bufnr, file) _G.assert((nil ~= file), "Missing argument file on fennel/virt-notes.fnl:205") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:205")
 
  local notes_file = file__3enotes_file(file)
  local _let_32_ = get_notes_from_file(notes_file) local _ = _let_32_[1] local all_notes = _let_32_[2]
  return set_all_notes(bufnr, all_notes, true) end
 
- local function on_choice(callback, _3fchoice) _G.assert((nil ~= callback), "Missing argument callback on fennel/virt-notes.fnl:208")
+ local function on_choice(callback, _3fchoice) _G.assert((nil ~= callback), "Missing argument callback on fennel/virt-notes.fnl:211")
  if _3fchoice then return callback(_3fchoice) else return nil end end
 
- local function select_note_on_line(prompt, bufnr, line, callback) _G.assert((nil ~= callback), "Missing argument callback on fennel/virt-notes.fnl:211") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:211") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:211") _G.assert((nil ~= prompt), "Missing argument prompt on fennel/virt-notes.fnl:211")
+ local function select_note_on_line(prompt, bufnr, line, callback) _G.assert((nil ~= callback), "Missing argument callback on fennel/virt-notes.fnl:214") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:214") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:214") _G.assert((nil ~= prompt), "Missing argument prompt on fennel/virt-notes.fnl:214")
  local _34_ = get_notes(bufnr, line) if ((_G.type(_34_) == "table") and (nil ~= (_34_)[1]) and (nil ~= (_34_)[2])) then local x = (_34_)[1] local y = (_34_)[2] local notes = _34_
  local function _35_(...) return on_choice(callback, ...) end return ui.select(notes, {prompt = prompt}, _35_) elseif ((_G.type(_34_) == "table") and (nil ~= (_34_)[1])) then local entry = (_34_)[1]
  return callback(entry) elseif true then local _ = _34_
@@ -227,17 +230,21 @@
  local notes_files = get_project_notes_files(cwd)
  return get_notes_in_files(notes_files) end
 
- local function on_buf_read(_39_) local _arg_40_ = _39_ local bufnr = _arg_40_["buf"] _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:230")
+ local function save_note(delete_on_paste_3f, bufnr, line, note) _G.assert((nil ~= note), "Missing argument note on fennel/virt-notes.fnl:233") _G.assert((nil ~= line), "Missing argument line on fennel/virt-notes.fnl:233") _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:233") _G.assert((nil ~= delete_on_paste_3f), "Missing argument delete-on-paste? on fennel/virt-notes.fnl:233")
+ _3fsaved_note = {bufnr = bufnr, line = line, note = note}
+ delete_note_on_paste_3f = delete_on_paste_3f return nil end
+
+ local function on_buf_read(_39_) local _arg_40_ = _39_ local bufnr = _arg_40_["buf"] _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:237")
  local file = get_absolute_path(bufnr)
  if ("" ~= file) then
  return load_notes(bufnr, file) else return nil end end
 
- local function on_buf_write(_42_) local _arg_43_ = _42_ local bufnr = _arg_43_["buf"] _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:235")
+ local function on_buf_write(_42_) local _arg_43_ = _42_ local bufnr = _arg_43_["buf"] _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:242")
  local file = get_absolute_path(bufnr)
  if (1 == filereadable(file)) then
  return persist_notes(bufnr, file) else return nil end end
 
- local function on_virt_notes_updated(_45_) local _arg_46_ = _45_ local bufnr = _arg_46_["buf"] _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:240")
+ local function on_virt_notes_updated(_45_) local _arg_46_ = _45_ local bufnr = _arg_46_["buf"] _G.assert((nil ~= bufnr), "Missing argument bufnr on fennel/virt-notes.fnl:247")
  local file = get_absolute_path(bufnr)
  local modified_3f = nvim_buf_get_option(bufnr, "modified")
  if (not modified_3f and ("" ~= file)) then
@@ -278,13 +285,26 @@
  local bufnr = nvim_get_current_buf()
  return set_all_notes(bufnr, {}) end
 
- actions.move = function()
+ actions["save-note"] = function(_3fprompt, _3fsuccess_msg, _3fdelete_on_paste_3f)
+ local prompt = (_3fprompt or "Save note")
+ local success_msg = (_3fsuccess_msg or "Note saved")
+ local delete_on_paste_3f = (_3fdelete_on_paste_3f or false)
  local bufnr = nvim_get_current_buf()
  local line = get_line()
 
  local function _58_(_241)
- _3fsaved_note = {bufnr = bufnr, line = line, note = _241}
- return nvim_echo({{"Moving note: "}, {_241}}, false, {}) end return select_note_on_line("Move note", bufnr, line, _58_) end
+ save_note(delete_on_paste_3f, bufnr, line, _241)
+ return nvim_echo({{success_msg}, {": "}, {_241}}, false, {}) end return select_note_on_line(prompt, bufnr, line, _58_) end
+
+ actions.copy = function()
+ return actions["save-note"]("Copy note", "Note copied", false) end
+
+ actions.move = function()
+ vim.deprecate("actions.move()", "actions.cut()", "2024", "virt-notes.nvim", true)
+ return actions["save-note"]("Move note", "Moving note", true) end
+
+ actions.cut = function()
+ return actions["save-note"]("Cut note", "Note cut", true) end
 
  actions.paste = function()
  if _3fsaved_note then
@@ -292,26 +312,27 @@
  local bufnr = nvim_get_current_buf()
  local line = get_line()
  add_note(bufnr, line, _3fsaved_note.note)
+ if delete_note_on_paste_3f then
  remove_note(_3fsaved_note.bufnr, _3fsaved_note.line, _3fsaved_note.note)
- _3fsaved_note = {bufnr = bufnr, line = line, note = _3fsaved_note.note} return nil else
+ return save_note(delete_note_on_paste_3f, bufnr, line, _3fsaved_note.note) else return nil end else
  return nvim_echo({{"No note selected", "ErrorMsg"}}, false, {}) end end
 
- local function replace_prefix(keys, prefix) _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:299") _G.assert((nil ~= keys), "Missing argument keys on fennel/virt-notes.fnl:299")
- local function _60_(word)
+ local function replace_prefix(keys, prefix) _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:320") _G.assert((nil ~= keys), "Missing argument keys on fennel/virt-notes.fnl:320")
+ local function _61_(word)
  if (string.lower(word) == "prefix") then
- return prefix else return nil end end return string.gsub(keys, "<([^>]+)>", _60_) end
+ return prefix else return nil end end return string.gsub(keys, "<([^>]+)>", _61_) end
 
- local function map_keys(prefix, mappings) _G.assert((nil ~= mappings), "Missing argument mappings on fennel/virt-notes.fnl:304") _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:304")
+ local function map_keys(prefix, mappings) _G.assert((nil ~= mappings), "Missing argument mappings on fennel/virt-notes.fnl:325") _G.assert((nil ~= prefix), "Missing argument prefix on fennel/virt-notes.fnl:325")
 
- local set_mappings local function _62_(_241) if (_241 == false) then return nil else return _241 end end set_mappings = tbl_map(_62_, mappings)
- for action, _64_ in pairs(set_mappings) do local _each_65_ = _64_ local keys = _each_65_["keys"] local opts = _each_65_["opts"]
+ local set_mappings local function _63_(_241) if (_241 == false) then return nil else return _241 end end set_mappings = tbl_map(_63_, mappings)
+ for action, _65_ in pairs(set_mappings) do local _each_66_ = _65_ local keys = _each_66_["keys"] local opts = _each_66_["opts"]
  local real_keys = replace_prefix(keys, prefix)
  local callback = actions[action]
  if callback then
  kset("n", real_keys, callback, opts) else end end return nil end
 
- local function validate_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:313")
- local user_mappings local function _67_() local t_68_ = config.mappings if (nil ~= t_68_) then t_68_ = (t_68_).actions else end return t_68_ end user_mappings = (_67_() or {}) local map_rules
+ local function validate_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:334")
+ local user_mappings local function _68_() local t_69_ = config.mappings if (nil ~= t_69_) then t_69_ = (t_69_).actions else end return t_69_ end user_mappings = (_68_() or {}) local map_rules
  do local tbl_14_auto = {} for action, map_opts in pairs(user_mappings) do
  local k_15_auto, v_16_auto = ("mappings.actions." .. action), {map_opts, {"table", "string", "boolean"}} if ((k_15_auto ~= nil) and (v_16_auto ~= nil)) then tbl_14_auto[k_15_auto] = v_16_auto else end end map_rules = tbl_14_auto end local rules
 
@@ -319,11 +340,11 @@
 
 
 
- local _72_ do local t_71_ = config.mappings if (nil ~= t_71_) then t_71_ = (t_71_).prefix else end _72_ = t_71_ end
- local _75_ do local t_74_ = config.mappings if (nil ~= t_74_) then t_74_ = (t_74_).actions else end _75_ = t_74_ end rules = {notes_path = {config.notes_path, {"string", "nil"}}, hl_group = {config.hl_group, {"string", "nil"}}, remove_schemes = {config.remove_schemes, {"table", "nil"}}, mappings = {config.mappings, {"table", "boolean", "nil"}}, ["mappings.prefix"] = {_72_, {"string", "nil"}}, ["mappings.actions"] = {_75_, {"table", "nil"}}}
+ local _73_ do local t_72_ = config.mappings if (nil ~= t_72_) then t_72_ = (t_72_).prefix else end _73_ = t_72_ end
+ local _76_ do local t_75_ = config.mappings if (nil ~= t_75_) then t_75_ = (t_75_).actions else end _76_ = t_75_ end rules = {notes_path = {config.notes_path, {"string", "nil"}}, hl_group = {config.hl_group, {"string", "nil"}}, remove_schemes = {config.remove_schemes, {"table", "nil"}}, mappings = {config.mappings, {"table", "boolean", "nil"}}, ["mappings.prefix"] = {_73_, {"string", "nil"}}, ["mappings.actions"] = {_76_, {"table", "nil"}}}
  return validate(tbl_extend("error", rules, map_rules)) end
 
- local function apply_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:326")
+ local function apply_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:347")
  if config.notes_path then
  notes_path = config.notes_path else end
  if config.hl_group then
@@ -334,16 +355,22 @@
  local map_cfg = (config.mappings or {})
  local prefix = (map_cfg.prefix or "<Leader>v") local key_actions
 
- local function _80_(_241) if (type(_241) == "string") then return {keys = _241} else return _241 end end key_actions = tbl_map(_80_, (map_cfg.actions or {}))
+ local function _81_(_241) if (type(_241) == "string") then return {keys = _241} else return _241 end end key_actions = tbl_map(_81_, (map_cfg.actions or {}))
  return map_keys(prefix, tbl_extend("force", default_mappings, key_actions)) else return nil end end
 
+ local function fix_config(config) _G.assert((nil ~= config), "Missing argument config on fennel/virt-notes.fnl:361")
+ local _85_ do local t_84_ = config if (nil ~= t_84_) then t_84_ = (t_84_).mappings else end if (nil ~= t_84_) then t_84_ = (t_84_).actions else end if (nil ~= t_84_) then t_84_ = (t_84_).move else end _85_ = t_84_ end if _85_ then
+ config.mappings.actions["cut"] = config.mappings.actions.move
+ config.mappings.actions["move"] = nil else end
+ return config end
+
  local function setup(_3fconfig)
- do local config = (_3fconfig or {})
+ do local config = fix_config((_3fconfig or {}))
  validate_config(config)
  apply_config(config) end
  mkdir(notes_path, "p")
  if (1 == exists("g:loaded_telescope")) then
- local _let_83_ = require("telescope") local load_extension = _let_83_["load_extension"]
+ local _let_90_ = require("telescope") local load_extension = _let_90_["load_extension"]
  load_extension("virt_notes") else end
  local group = nvim_create_augroup("VirtNotes", {clear = true})
  nvim_create_autocmd("BufRead", {group = group, callback = on_buf_read})

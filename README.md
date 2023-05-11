@@ -63,7 +63,9 @@ require('virt-notes').setup({
             remove = {keys = "<prefix>dd", opts = {desc = "Delete note"}},
             remove_on_line = {keys = "<prefix>dl", opts = {desc = "Delete all notes on line"}},
             remove_in_file = {keys = "<prefix>da", opts = {desc = "Delete all notes in file"}},
-            move = {keys = "<prefix>x", opts = {desc = "Move note"}},
+            copy = {keys = "<prefix>c", opts = {desc = "Copy note"}},
+            -- cut deletes note when pasting (note: not deleting when buffer is unloaded)
+            cut = {keys = "<prefix>x", opts = {desc = "Cut note"}},
             paste = {keys = "<prefix>p", opts = {desc = "Paste note"}}
         }
     }
