@@ -1,6 +1,7 @@
 (local {: startswith
         : tbl_contains
         : tbl_extend
+        : tbl_deep_extend
         : tbl_filter
         : tbl_flatten
         : tbl_map
@@ -356,7 +357,7 @@
           prefix (or map-cfg.prefix :<Leader>v)
           key-actions (->> (or map-cfg.actions {})
                            (tbl_map #(if (= (type $1) :string) {:keys $1} $1)))]
-      (map-keys prefix (tbl_extend :force default-mappings key-actions)))))
+      (map-keys prefix (tbl_deep_extend :force default-mappings key-actions)))))
 
 (lambda fix-config [config]
   (when (?. config :mappings :actions :move)
