@@ -37,7 +37,6 @@
         :keymap {:set kset}} vim)
 
 (local is-windows (= 1 (has :win32)))
-(print is-windows)
 
 (local namespace (nvim_create_namespace :VirtNotes))
 (local note-highlight :VirtNote)
