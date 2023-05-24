@@ -27,6 +27,7 @@
              : flatten
              : fnamemodify
              : getcwd
+             : has
              : mkdir
              : readdir
              : readfile
@@ -34,6 +35,9 @@
              : substitute
              : writefile}
         :keymap {:set kset}} vim)
+
+(local is-windows (= 1 (has :win32)))
+(print is-windows)
 
 (local namespace (nvim_create_namespace :VirtNotes))
 (local note-highlight :VirtNote)
@@ -73,7 +77,19 @@
   (clear-scheme (nvim_buf_get_name (or ?bufnr 0))))
 
 (lambda clean-path [path]
-  (string.gsub path "/" "_"))
+  "
+  Clean path for use as filename
+
+  Replaced characters are different on Windows and Unix systems, because
+  in earlier versions of this plugin, only '/' was replaced This works
+  on Unix systems, so if a path has a schema like for example 'fugitive://'
+  it was replaced as 'fugitive:__'. If the replaced characters are changed
+  later on, note files would not be found anymore. So differentiation is
+  needed.
+  "
+  (if is-windows
+      (string.gsub path "[<>:\"/\\|?*]" "_")
+      (string.gsub path "/" "_")))
 
 (lambda file->notes-file [file]
   (.. notes-path "/" (clean-path file) :.txt))
@@ -81,9 +97,6 @@
 (lambda get-line []
   (let [[line] (nvim_win_get_cursor 0)]
     (- line 1)))
-
-(lambda remove-scheme [notes-file]
-  (substitute notes-file "^\\(\\w\\+:__\\)\\?" "" ""))
 
 (lambda notes->virt-text [notes]
   (let [virt-text (-> (icollect [_ note (ipairs notes)]
