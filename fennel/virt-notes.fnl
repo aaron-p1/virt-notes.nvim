@@ -19,6 +19,7 @@
               : nvim_exec_autocmds
               : nvim_get_current_buf
               : nvim_echo
+              : nvim_list_bufs
               : nvim_set_hl
               : nvim_win_get_cursor}
         :fn {: exists
@@ -392,7 +393,9 @@
     (nvim_create_autocmd :User
                          {: group
                           :pattern :VirtualNotesUpdated
-                          :callback on-virt-notes-updated})))
+                          :callback on-virt-notes-updated}))
+  (each [_ buf (ipairs (nvim_list_bufs))]
+    (on-buf-read {: buf})))
 
 {: setup
  :get_notes_in_cwd get-notes-in-cwd
