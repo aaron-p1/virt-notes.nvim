@@ -19,7 +19,7 @@
 (lambda note-entry->telescope-entry [note-entry]
   (let [path (fnamemodify note-entry.file ":.")]
     {:value note-entry
-     :display (.. path " | " note-entry.note)
+     :display (.. path ":" (+ 1 note-entry.line) " | " note-entry.note)
      :ordinal (.. path " " note-entry.line " " note-entry.note)
      :path note-entry.file
      :lnum (+ 1 note-entry.line)}))

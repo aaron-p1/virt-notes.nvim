@@ -18,7 +18,7 @@
 
  local function note_entry__3etelescope_entry(note_entry) _G.assert((nil ~= note_entry), "Missing argument note-entry on fennel/telescope/_extensions/virt_notes.fnl:19")
  local path = fnamemodify(note_entry.file, ":.")
- return {value = note_entry, display = (path .. " | " .. note_entry.note), ordinal = (path .. " " .. note_entry.line .. " " .. note_entry.note), path = note_entry.file, lnum = (1 + note_entry.line)} end
+ return {value = note_entry, display = (path .. ":" .. (1 + note_entry.line) .. " | " .. note_entry.note), ordinal = (path .. " " .. note_entry.line .. " " .. note_entry.note), path = note_entry.file, lnum = (1 + note_entry.line)} end
 
 
 
