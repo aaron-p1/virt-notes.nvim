@@ -11,6 +11,7 @@
               : nvim_buf_get_extmarks
               : nvim_buf_get_name
               : nvim_buf_get_option
+              : nvim_buf_is_loaded
               : nvim_buf_line_count
               : nvim_buf_set_extmark
               : nvim_create_augroup
@@ -395,7 +396,8 @@
                           :pattern :VirtualNotesUpdated
                           :callback on-virt-notes-updated}))
   (each [_ buf (ipairs (nvim_list_bufs))]
-    (on-buf-read {: buf})))
+    (when (nvim_buf_is_loaded buf)
+      (on-buf-read {: buf}))))
 
 {: setup
  :get_notes_in_cwd get-notes-in-cwd
