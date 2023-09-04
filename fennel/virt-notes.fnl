@@ -1,4 +1,5 @@
 (local {: startswith
+        : spairs
         : tbl_contains
         : tbl_extend
         : tbl_deep_extend
@@ -180,7 +181,7 @@
   "Presist notes to file or delete it. File must be absolute path."
   (let [notes-file (file->notes-file file)
         all-notes (get-all-notes bufnr)
-        lines (tbl_flatten (icollect [line notes (pairs all-notes)]
+        lines (tbl_flatten (icollect [line notes (spairs all-notes)]
                              (icollect [_ note (ipairs notes)]
                                (note->line line note))))]
     (if (= 0 (length lines))
