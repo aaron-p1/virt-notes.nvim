@@ -83,11 +83,15 @@ function M.get_project_notes_files(cwd)
         return {}
     end
 
-    return vim.iter(notes_files)
-        :filter(function(notes_file)
-            return vim.startswith(notes_file, clean_cwd)
-        end)
-        :totable()
+    local result = {}
+
+    for _, notes_file in ipairs(notes_files) do
+        if vim.startswith(notes_file, clean_cwd) then
+            table.insert(result, notes_file)
+        end
+    end
+
+    return result
 end
 
 return M

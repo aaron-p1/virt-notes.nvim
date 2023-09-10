@@ -39,23 +39,23 @@ end
 --- @return table<integer, string[]> notes
 function M.parse_notes_file(lines)
     local file = lines[1]
+    local notes = {}
 
-    return file,
-        vim.iter(lines)
-            :skip(1)
-            :map(line_to_note)
-            :filter(function(line_nr, note)
-                return line_nr and note
-            end)
-            :fold({}, function(acc, line_nr, note)
-                if acc[line_nr] == nil then
-                    acc[line_nr] = { note }
+    for index, line in ipairs(lines) do
+        if index ~= 1 then
+            local line_nr, text = line_to_note(line)
+
+            if line_nr and text then
+                if notes[line_nr] == nil then
+                    notes[line_nr] = { text }
                 else
-                    table.insert(acc[line_nr], note)
+                    table.insert(notes[line_nr], text)
                 end
+            end
+        end
+    end
 
-                return acc
-            end)
+    return file, notes
 end
 
 --- Loads all notes from a file and returns it.
@@ -82,12 +82,16 @@ local function notes_to_virt_text(notes)
         return {}
     end
 
-    return vim.iter(notes):skip(1):fold({ { notes[1], config.note_highlight } }, function(acc, note)
-        table.insert(acc, { " " })
-        table.insert(acc, { note, config.note_highlight })
+    local virt_text = {}
 
-        return acc
-    end)
+    for index, note in ipairs(notes) do
+        if index ~= 1 then
+            table.insert(virt_text, { " " })
+        end
+        table.insert(virt_text, { note, config.note_highlight })
+    end
+
+    return virt_text
 end
 
 --- Sets all notes for a buffer.
@@ -102,15 +106,11 @@ function M.set_all_notes(bufnr, all_notes, with_autocmd)
 
     local max_line = vim.api.nvim_buf_line_count(bufnr) - 1
 
-    vim.iter(all_notes)
-        :map(function(linenr, notes)
-            return math.min(linenr, max_line), notes
-        end)
-        :each(function(linenr, notes)
-            vim.api.nvim_buf_set_extmark(bufnr, config.namespace, linenr, 0, {
-                virt_text = notes_to_virt_text(notes),
-            })
-        end)
+    for linenr, notes in pairs(all_notes) do
+        vim.api.nvim_buf_set_extmark(bufnr, config.namespace, math.min(linenr, max_line), 0, {
+            virt_text = notes_to_virt_text(notes),
+        })
+    end
 
     if with_autocmd then
         vim.api.nvim_exec_autocmds("User", { pattern = "VirtualNotesUpdated", data = { buf = bufnr } })
@@ -155,28 +155,24 @@ end
 --- @param extmarks any[]
 --- @return table<integer, string[]> notes
 local function extmarks_to_notes(extmarks)
-    return vim.iter(extmarks)
-        :map(function(extmark)
-            return extmark[2],
-                vim.iter(extmark[4].virt_text)
-                    :filter(function(virt_text)
-                        return virt_text[2]
-                    end)
-                    :map(function(virt_text)
-                        return virt_text[1]
-                    end)
-                    :totable()
-        end)
-        :fold({}, function(acc, line, notes)
-            -- There might be multiple extmarks on the same line
-            if acc[line] == nil then
-                acc[line] = notes
-            else
-                acc[line] = vim.list_extend(acc[line], notes)
-            end
+    local notes = {}
 
-            return acc
-        end)
+    for _, extmark in ipairs(extmarks) do
+        local line = extmark[2]
+        local virt_text = extmark[4].virt_text
+
+        for _, virt_text_entry in ipairs(virt_text) do
+            if virt_text_entry[2] then
+                if notes[line] == nil then
+                    notes[line] = { virt_text_entry[1] }
+                else
+                    table.insert(notes[line], virt_text_entry[1])
+                end
+            end
+        end
+    end
+
+    return notes
 end
 
 --- Gets all notes for a buffer.
@@ -216,15 +212,13 @@ function M.persist_notes(bufnr)
     local notes_file = util.file_to_notes_file(file)
     local all_notes = M.get_all_notes(bufnr)
 
-    local lines = vim.iter(vim.spairs(all_notes))
-        :map(function(linenr, notes)
-            return vim.tbl_map(function(note)
-                return string.format("%d %s", linenr, note)
-            end, notes)
-        end)
-        :totable()
+    local lines = {}
 
-    lines = vim.tbl_flatten(lines)
+    for linenr, notes in vim.spairs(all_notes) do
+        for _, note in ipairs(notes) do
+            table.insert(lines, string.format("%d %s", linenr, note))
+        end
+    end
 
     if #lines == 0 then
         vim.fn.delete(notes_file)
@@ -239,16 +233,18 @@ end
 --- @param notes_files string[]
 --- @return table<string, table<integer, string[]>> notes `{ file = { line = {notes} } }`
 function M.get_notes_in_files(notes_files)
-    return vim.iter(notes_files)
-        :map(function(notes_file)
-            notes_file = config.values.notes_path .. "/" .. notes_file
+    local all_notes = {}
 
-            return M.get_notes_from_file(notes_file)
-        end)
-        :fold({}, function(acc, file, all_notes)
-            acc[file] = all_notes
-            return acc
-        end)
+    for _, notes_file in ipairs(notes_files) do
+        notes_file = config.values.notes_path .. "/" .. notes_file
+        local file, notes = M.get_notes_from_file(notes_file)
+
+        assert(file ~= nil, "Could not load notes file: " .. notes_file)
+
+        all_notes[file] = notes
+    end
+
+    return all_notes
 end
 
 --- Gets all notes in the current working directory.

@@ -68,9 +68,9 @@ local function validate_config(user_config)
         ["mappings.actions"] = { mappings.actions, { "table", "nil" } },
     })
 
-    vim.iter(mappings.actions or {}):each(function(action, map_opts)
+    for action, map_opts in pairs(mappings.actions or {}) do
         vim.validate({ ["mappings.actions." .. action] = { map_opts, { "table", "string", "boolean" } } })
-    end)
+    end
 end
 
 --- Replaces `"<prefix>"` in `keys` with the `prefix`
@@ -96,20 +96,16 @@ end
 local function map_keys(prefix, mappings)
     local actions = require("virt-notes.actions")
 
-    vim.iter(mappings)
-        :filter(function(_, map_opts)
-            return map_opts ~= false
-        end)
-        --- @param action string
-        --- @param map_opts user_mapping_action_opts
-        :each(function(action, map_opts)
+    for action, map_opts in pairs(mappings) do
+        if map_opts ~= false then
             local real_keys = replace_mapping_prefix(map_opts.keys, prefix)
             local callback = actions[action]
 
             if callback then
-                vim.keymap.set('n', real_keys, callback, map_opts.opts)
+                vim.keymap.set("n", real_keys, callback, map_opts.opts)
             end
-        end)
+        end
+    end
 end
 
 --- Applies the given `user_config`

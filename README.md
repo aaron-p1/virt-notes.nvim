@@ -16,7 +16,7 @@ In this video I use the [gruvbox.nvim](https://github.com/ellisonleao/gruvbox.nv
 
 ## Requirements
 
-- [neovim >=0.8.0](https://github.com/neovim/neovim/wiki/Installing-Neovim)
+- [neovim >= 0.9.1](https://github.com/neovim/neovim/wiki/Installing-Neovim), other versions not tested
 - optionally [telescope](https://github.com/nvim-telescope/telescope.nvim) plugin
 - vim.ui plugins like [dressing.nvim](https://github.com/stevearc/dressing.nvim) are recommended to
   make selections and input better

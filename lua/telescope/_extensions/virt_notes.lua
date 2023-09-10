@@ -11,13 +11,13 @@ local tconfig = require("telescope.config").values
 local function flatten_notes(notes_table)
     local flattened = {}
 
-    vim.iter(notes_table):each(function(file, file_notes)
-        vim.iter(file_notes):each(function(line, line_notes)
-            vim.iter(line_notes):each(function(note)
+    for file, file_notes in pairs(notes_table) do
+        for line, line_notes in pairs(file_notes) do
+            for _, note in ipairs(line_notes) do
                 table.insert(flattened, { file = file, line = line, note = note })
-            end)
-        end)
-    end)
+            end
+        end
+    end
 
     return flattened
 end
