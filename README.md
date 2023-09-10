@@ -70,18 +70,3 @@ require('virt-notes').setup({
         }
     }
 })
-```
-
-## Contributing
-
-If you're interested in contributing to this plugin, it's important to note that it's written in
-[fennel](https://fennel-lang.org/). The lua code is generated using the fennel transpiler, so all
-contributions must also be written in fennel. You can use the command `$ make` to transpile the
-code, and before committing any changes, it's mandatory that you use the
-[fnlfmt](https://git.sr.ht/~technomancy/fnlfmt) tool by running `$ make format` or using the
-[null-ls](https://github.com/jose-elias-alvarez/null-ls.nvim) neovim plugin to format the code.
-
-If you're using [nix](https://github.com/NixOS/nix), a package manager for Linux and other Unix
-systems, you can easily install the necessary programs for development by running
-`$ nix develop`, or by using [direnv](https://github.com/direnv/direnv) with
-[nix-direnv](https://github.com/nix-community/nix-direnv).
